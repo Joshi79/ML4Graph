@@ -3,7 +3,7 @@ import numpy as np
 from models import SampleAndAggregate, SAGEInfo
 from minibatch import EdgeMinibatchIterator
 from neigh_samplers import NeighborSampler
-from utils1 import load_data, load_centrality_measures
+from utils import load_data, load_centrality_measures
 import os
 import json
 import time
