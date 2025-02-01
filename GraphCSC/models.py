@@ -5,7 +5,7 @@ import random
 
 from negative_sampler import generate_negative_samples_from_labels
 from prediction import BipartiteEdgePredLayer
-from aggregators import  CSCAggregator
+from aggregators import CSCAggregator
 from utils import load_centrality_measures
 
 # Disclaimer
@@ -172,8 +172,6 @@ class SampleAndAggregate(GeneralizedModel):
         self.optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
 
         self.build()
-
-
 
     def sample(self, inputs, layer_infos, batch_size=None):
         """ Sample neighbors to be the supportive fields for multi-layer convolutions.
