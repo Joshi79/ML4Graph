@@ -5,14 +5,13 @@ import os
 from networkx.readwrite import json_graph
 import networkx as nx
 
-# Define constants
 WALK_LEN = 5
 N_WALKS = 50
 
 
 def load_data(prefix,directory, normalize=True, load_walks=False):
     """Load graph, features, and class map from files."""
-    #G_data = json.load(open(prefix + "-G.json"))
+
     G_data = json.load(open(os.path.join(directory, prefix + "-G.json")))
 
     G = json_graph.node_link_graph(G_data)
@@ -30,24 +29,15 @@ def load_data(prefix,directory, normalize=True, load_walks=False):
     else:
         print("No features present.. Only identity features will be used.")
         feats = None
-    '''
-    if os.path.exists(prefix + "-feats.npy"):
-        feats = np.load(prefix + "-feats.npy")
-    else:
-        print("No features present.. Only identity features will be used.")
-        feats = None
-    '''
-
 
     # Load ID map
     id_map = json.load(open(os.path.join(directory, prefix + "-id_map.json")))
 
-    #id_map = json.load(open(prefix + "-id_map.json"))
     id_map = {conversion(k): int(v) for k, v in id_map.items()}
 
     # Load class map
     class_map = json.load(open(os.path.join(directory, prefix + "-class_map.json")))
-   # class_map = json.load(open(prefix + "-class_map.json"))
+
     if isinstance(list(class_map.values())[0], list):
         lab_conversion = lambda n: n
     else:
@@ -80,14 +70,7 @@ def load_data(prefix,directory, normalize=True, load_walks=False):
         scaler.fit(train_feats)
         feats = scaler.transform(feats)
 
-    # Load random walks
-    '''
-    walks = []
-    if load_walks:
-        with open(prefix + "-walks.txt") as fp:
-            for line in fp:
-                walks.append(list(map(conversion, line.split())))
-    '''
+    # Load Centrality Based random walks
     walks = []
     if load_walks:
         with open(os.path.join(directory, prefix + "-walks.txt")) as fp:
@@ -115,6 +98,8 @@ def normalize_centrality(centrality_scores):
 def calculate_centrality_measures(graph):
     centrality_measures = {
         "degree": nx.degree_centrality(graph),
+
+        # In my research I focus soley on degree, therefore the other centralities are not necessary to run.
         #"closeness": nx.closeness_centrality(graph),
         #"betweenness": nx.betweenness_centrality(graph),
         #"eigenvector": nx.eigenvector_centrality(graph),
@@ -137,9 +122,9 @@ def run_random_walks_with_centrality(G, nodes, centrality_scores, num_walks=N_WA
             continue
 
         # Get the normalized centrality score for the node
-        normalized_score = normalized_scores.get(str(node), 0)  # Ensure string keys for compatibility
+        normalized_score = normalized_scores.get(str(node), 0)
 
-        # Scale the number of random walks based on centrality score
+        # Nodes which have
         num_walks_for_node = max(int(num_walks * normalized_score), 1)
 
         # Perform the scaled number of random walks
@@ -161,33 +146,41 @@ def run_random_walks_with_centrality(G, nodes, centrality_scores, num_walks=N_WA
 
 
 if __name__ == "__main__":
-    # Specify the dataset directory and prefix
+
     prefix = "ppi"
-    directory = r"C:\Users\User\PycharmProjects\ML4Graphs\GraphSAGE\PPI"
+    directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
 
     # Load the data
     G, feats, id_map, walks, class_map = load_data(prefix, directory, load_walks=False)
 
-
     # Get the nodes to run random walks
     nodes = [n for n in G.nodes() if not G.node[n]["val"] and not G.node[n]["test"]]
     G = G.subgraph(nodes)
+
     '''
-    # Calculate the Centrality
+    # Calculate the Centrality, this needs to be done only oncce, thus as I cun it already it is not necessary to run it again.
     centrality_measures = calculate_centrality_measures(G)
-    save_centrality_as_json(centrality_measures, "centrality_measures_final_complete_dataset.json")
-    centrality_measures = load_centrality_measures("centrality_measures_final_complete_dataset.json")
+    save_centrality_as_json(centrality_measures, "../PPI_Data/normalized_degree_centrality.json")
+    centrality_measures = load_centrality_measures("../PPI_Data/normalized_degree_centrality.json")
+    '''
+
+    '''
+    As I calulate the only the degree centrality, I dont need to normalize them, as the networkx package does this automatically when calculating the degree
     normalize_centralized_degree = normalize_centrality(centrality_measures["degree"])
-   
-    
+    '''
+
+    '''
+    Calculate once the bridge strength once
     bridge_strength_file = os.path.join(directory, "ppi-bridge_strength_normalized.json")
+    
+    '''
 
     with open(bridge_strength_file, "r") as f:
         normalize_centralized_degree = json.load(f)
-    '''
-    #directory = r"C:\Users\User\PycharmProjects\ML4Graphs\GraphSAGE\PPI"
+
+    directory = r"C:\Users\User\PycharmProjects\ML4Graphs\GraphSAGE\PPI"
 
     # Run random walks and save the output
     pairs = run_random_walks_with_centrality(G, G.nodes(), normalize_centralized_degree)
-    with open("ppi-walks_full_dataset_bridge.txt", "w") as fp:
-        fp.write("\n".join([f"{p[0]}\t{p[1]}" for p in pairs]))
+    with open("ppi-walks_full_dataset_bridge_centrality.txt", "w") as fp:
+            fp.write("\n".join([f"{p[0]}\t{p[1]}" for p in pairs]))
