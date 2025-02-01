@@ -27,7 +27,7 @@ log_device_placement = False
 save_embeddings = True
 train_prefix = "ppi"
 random_context = True
-epochs = 5
+epochs = 2
 
 
 def construct_placeholders():
