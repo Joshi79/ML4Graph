@@ -22,7 +22,6 @@ directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
 centrality_measure = load_centrality_measures(directory,"normalized_degree_centrality.json")
 centrality = centrality_measure["degree"]
 
-#  of centralities
 mean_centrality = np.mean(list(centrality.values()))
 print(mean_centrality)
 
@@ -37,10 +36,9 @@ model = Sequential([
 ])
 
 # Compile the model
-# Compile the model
-model.compile(optimizer=SGD(lr=0.07), loss='mean_absolute_error', metrics=['mae'])
+model.compile(optimizer=SGD(lr=0.001), loss='mean_absolute_error', metrics=['mae'])
 # Train the model
-model.fit(train_embeddings, train_centrality, epochs=10, batch_size=32, validation_split=0.1)
+model.fit(train_embeddings, train_centrality, epochs=50, batch_size=32, validation_split=0.1)
 
 # Evaluate the model
 loss, mae = model.evaluate(test_embeddings, test_centrality)
