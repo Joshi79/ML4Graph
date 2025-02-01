@@ -4,6 +4,7 @@ import json
 import os
 from networkx.readwrite import json_graph
 import networkx as nx
+import tensorflow as tf
 
 WALK_LEN = 5
 N_WALKS = 50
@@ -111,6 +112,15 @@ def save_centrality_as_json(centrality_measures, output_file):
     with open(output_file, 'w') as f:
         json.dump(centrality_measures, f, indent=4)
     print(f"Centrality measures saved to {output_file}")
+
+
+def glorot(shape, name=None):
+    init_range = np.sqrt(6.0/(shape[0] + shape[1]))
+    initial = tf.random_uniform(shape, minval=-init_range, maxval=init_range, dtype=tf.float32)
+    return tf.Variable(initial, name=name)
+
+def zeros(shape, name=None):
+    return tf.Variable(tf.zeros(shape, dtype=tf.float32), name=name)
 
 
 def run_random_walks_with_centrality(G, nodes, centrality_scores, num_walks=N_WALKS):
