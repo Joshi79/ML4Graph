@@ -165,8 +165,10 @@ if __name__ == "__main__":
     G, feats, id_map, walks, class_map = load_data(prefix, directory, load_walks=False)
 
     # Get the nodes to run random walks
+    '''
     nodes = [n for n in G.nodes() if not G.node[n]["val"] and not G.node[n]["test"]]
     G = G.subgraph(nodes)
+    '''
 
     '''
     # Calculate the Centrality, this needs to be done only oncce, thus as I cun it already it is not necessary to run it again.
@@ -186,12 +188,15 @@ if __name__ == "__main__":
     
     '''
 
-    with open(bridge_strength_file, "r") as f:
-        normalize_centralized_degree = json.load(f)
+    #with open(bridge_strength_file, "r") as f:
+       # normalize_centralized_degree = json.load(f)
 
-    directory = r"C:\Users\User\PycharmProjects\ML4Graphs\GraphSAGE\PPI"
+    directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
+    cent = load_centrality_measures(directory, "normalized_degree_centrality.json")
+    normalize_centralized_degree = cent["degree"]
 
     # Run random walks and save the output
+
     pairs = run_random_walks_with_centrality(G, G.nodes(), normalize_centralized_degree)
-    with open("ppi-walks_full_dataset_bridge_centrality.txt", "w") as fp:
+    with open("../PPI_Data/ppi-walks.txt", "w") as fp:
             fp.write("\n".join([f"{p[0]}\t{p[1]}" for p in pairs]))
