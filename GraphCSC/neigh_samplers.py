@@ -1,8 +1,5 @@
-from __future__ import division
-from __future__ import print_function
-
 from layers import Layer
-from utils1 import load_centrality_measures
+from utils import load_centrality_measures
 import numpy
 import tensorflow as tf
 import random
