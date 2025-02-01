@@ -213,7 +213,7 @@ def train(train_data, centrality_measures, context=True):
 def main():
     print("Loading data...")
     centrality_dict = load_centrality_measures("centrality_measures_final_complete_dataset.json")
-    directory = r"C:\Users\User\PycharmProjects\ML4Graphs\GraphSAGE\PPI"
+    directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
     train_data = load_data(train_prefix, directory,  load_walks=True)
     print("Data loaded.")
     train(train_data, centrality_dict)
