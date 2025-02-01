@@ -2,9 +2,6 @@ from utils import zeros
 from layers import Layer
 import tensorflow as tf
 
-
-
-
 class BipartiteEdgePredLayer(Layer):
     def __init__(self, input_dim1, input_dim2, placeholders, dropout=False, act=tf.nn.sigmoid,
             loss_fn='xent', neg_sample_weights=1.0,
@@ -53,10 +50,6 @@ class BipartiteEdgePredLayer(Layer):
 
         if loss_fn == 'xent':
             self.loss_fn = self._xent_loss
-        elif loss_fn == 'skipgram':
-            self.loss_fn = self._skipgram_loss
-        elif loss_fn == 'hinge':
-            self.loss_fn = self._hinge_loss
 
         if self.logging:
             self._log_vars()
