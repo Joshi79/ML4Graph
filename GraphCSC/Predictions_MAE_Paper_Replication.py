@@ -2,7 +2,7 @@ from keras.models import Sequential
 from keras.layers import Dense
 from keras.optimizers import SGD
 import numpy as np
-from utils1 import load_centrality_measures
+from utils import load_centrality_measures
 
 # Load the train and test embeddings
 train_embeddings = np.load("train_embeddings.npy")
