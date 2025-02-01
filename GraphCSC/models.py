@@ -1,12 +1,8 @@
 from collections import namedtuple
-import numpy as np
 import tensorflow as tf
-import random
-
 from negative_sampler import generate_negative_samples_from_labels
 from prediction import BipartiteEdgePredLayer
 from aggregators import CSCAggregator
-from utils import load_centrality_measures
 
 # Disclaimer
 # The Model object
