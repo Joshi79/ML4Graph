@@ -27,7 +27,7 @@ log_device_placement = False
 save_embeddings = True
 train_prefix = "ppi"
 random_context = True
-epochs = 1
+epochs = 5
 
 
 def construct_placeholders():
@@ -39,7 +39,6 @@ def construct_placeholders():
     }
 
 
-# Save embeddings to a file
 def save_embeddings(sess, model, minibatch_iter):
     """Save node embeddings to a file."""
     embeddings = []
@@ -175,21 +174,10 @@ def train(train_data, centrality_measures, context=True):
 
     train_nodes = [n for n, data in G.nodes(data=True) if not data.get('val', False) and not data.get('test', False)]
     test_nodes = [n for n, data in G.nodes(data=True) if data.get('val', False) or data.get('test', False)]
-    '''
-    # Create a mapping from node ID to its index in all_nodes
-    node_to_index = {node: idx for idx, node in enumerate(all_nodes)}
 
-    # Get train and test indices
-    train_indices = [node_to_index[n] for n in train_nodes if n in node_to_index]
-    test_indices = [node_to_index[n] for n in test_nodes if n in node_to_index]
 
-    print(train_indices[:10])
-    print(test_indices[:10])
-    print(all_nodes[:10])
-    '''
     # Create a mapping from node ID to its index
     node_to_index = {node: idx for idx, node in enumerate(all_nodes)}
-    # Map train and test nodes to indices
     train_indices = [node_to_index[n] for n in train_nodes]
     test_indices = [node_to_index[n] for n in test_nodes]
 
@@ -212,8 +200,8 @@ def train(train_data, centrality_measures, context=True):
 
 def main():
     print("Loading data...")
-    centrality_dict = load_centrality_measures("centrality_measures_final_complete_dataset.json")
     directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
+    centrality_dict = load_centrality_measures(directory, "normalized_degree_centrality.json")
     train_data = load_data(train_prefix, directory,  load_walks=True)
     print("Data loaded.")
     train(train_data, centrality_dict)

@@ -80,7 +80,8 @@ def load_data(prefix,directory, normalize=True, load_walks=False):
     return G, feats, id_map, walks, class_map
 
 # Function to load the pre-computed centrality measures
-def load_centrality_measures(file_path):
+def load_centrality_measures(directory, file_name):
+    file_path = os.path.join(directory, file_name)
     with open(file_path, 'r') as f:
         centrality_measures = json.load(f)
     return centrality_measures

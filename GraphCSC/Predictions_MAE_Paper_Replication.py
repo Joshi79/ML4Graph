@@ -18,9 +18,13 @@ with open("train_nodes.txt", "r") as f:
 with open("test_nodes.txt", "r") as f:
     test_nodes = [line.strip() for line in f]
 
-# Load the centrality measures
-centrality_measure = load_centrality_measures("centrality_measures_final_complete.json")
+directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
+centrality_measure = load_centrality_measures(directory,"normalized_degree_centrality.json")
 centrality = centrality_measure["degree"]
+
+#  of centralities
+mean_centrality = np.mean(list(centrality.values()))
+print(mean_centrality)
 
 # Align centrality values with the embeddings
 train_centrality = np.array([centrality.get(node, 0) for node in train_nodes]).reshape(-1, 1)

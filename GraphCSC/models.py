@@ -1,14 +1,12 @@
 from collections import namedtuple
 import numpy as np
 import tensorflow as tf
-import math
 import random
-import layers as layers
-import metrics as metrics
 
+from negative_sampler import generate_negative_samples_from_labels
 from prediction import BipartiteEdgePredLayer
 from aggregators import  CSCAggregator
-from utils1 import load_centrality_measures
+from utils import load_centrality_measures
 
 # Disclaimer
 # The Model object
@@ -78,75 +76,6 @@ class Model(object):
     def _accuracy(self):
         raise NotImplementedError
 
-    def save(self, sess=None):
-        if not sess:
-            raise AttributeError("TensorFlow session not provided.")
-        saver = tf.train.Saver(self.vars)
-        save_path = saver.save(sess, "tmp/%s.ckpt" % self.name)
-        print("Model saved in file: %s" % save_path)
-
-    def load(self, sess=None):
-        if not sess:
-            raise AttributeError("TensorFlow session not provided.")
-        saver = tf.train.Saver(self.vars)
-        save_path = "tmp/%s.ckpt" % self.name
-        saver.restore(sess, save_path)
-        print("Model restored from file: %s" % save_path)
-
-
-class MLP(Model):
-    """ A standard multi-layer perceptron """
-    def __init__(self, placeholders, dims, categorical=True, **kwargs):
-        super(MLP, self).__init__(**kwargs)
-
-        self.dims = dims
-        self.input_dim = dims[0]
-        self.output_dim = dims[-1]
-        self.placeholders = placeholders
-        self.categorical = categorical
-
-        self.inputs = placeholders['features']
-        self.labels = placeholders['labels']
-
-        self.optimizer = tf.train.AdamOptimizer(learning_rate= learning_rate)
-
-        self.build()
-
-    def _loss(self):
-        # Weight decay loss
-        for var in self.layers[0].vars.values():
-            self.loss += FLAGS.weight_decay * tf.nn.l2_loss(var)
-
-        # Cross entropy error
-        if self.categorical:
-            self.loss += metrics.masked_softmax_cross_entropy(self.outputs, self.placeholders['labels'],
-                    self.placeholders['labels_mask'])
-        # L2
-        else:
-            diff = self.labels - self.outputs
-            self.loss += tf.reduce_sum(tf.sqrt(tf.reduce_sum(diff * diff, axis=1)))
-
-    def _accuracy(self):
-        if self.categorical:
-            self.accuracy = metrics.masked_accuracy(self.outputs, self.placeholders['labels'],
-                    self.placeholders['labels_mask'])
-
-    def _build(self):
-        self.layers.append(layers.Dense(input_dim=self.input_dim,
-                                 output_dim=self.dims[1],
-                                 act=tf.nn.relu,
-                                 dropout=self.placeholders['dropout'],
-                                 sparse_inputs=False,
-                                 logging=self.logging))
-
-        self.layers.append(layers.Dense(input_dim=self.dims[1],
-                                 output_dim=self.output_dim,
-                                 act=lambda x: x,
-                                 dropout=self.placeholders['dropout'],
-                                 logging=self.logging))
-
-    def predict(self):
-        return tf.nn.softmax(self.outputs)
 
 class GeneralizedModel(Model):
     """
@@ -191,7 +120,7 @@ class SampleAndAggregate(GeneralizedModel):
 
     def __init__(self, placeholders, features, adj, degrees,
             layer_infos, G, concat=False, aggregator_type="mean",
-            model_size="small", identity_dim=0,learning_rate=0.7, neg_sample_size=5, weight_decay=0.0,
+            model_size="small", identity_dim=0, learning_rate=0.7, neg_sample_size=5, weight_decay=0.0,
             **kwargs):
         '''
         Args:
@@ -208,23 +137,8 @@ class SampleAndAggregate(GeneralizedModel):
             - identity_dim: Set to positive int to use identity features (slow and cannot generalize, but better accuracy)
         '''
         super(SampleAndAggregate, self).__init__(**kwargs)
-        #if aggregator_type == "mean":
+
         self.aggregator_cls = CSCAggregator
-
-        '''
-        elif aggregator_type == "seq":
-            self.aggregator_cls = SeqAggregator
-        elif aggregator_type == "maxpool":
-            self.aggregator_cls = MaxPoolingAggregator
-        elif aggregator_type == "meanpool":
-            self.aggregator_cls = MeanPoolingAggregator
-        elif aggregator_type == "gcn":
-            self.aggregator_cls = GCNAggregator
-        else:
-            raise Exception("Unknown aggregator: ", self.aggregator_cls)
-        '''
-
-        # get info from placeholders...
         self.inputs1 = placeholders["batch1"]
         self.inputs2 = placeholders["batch2"]
         self.model_size = model_size
@@ -259,100 +173,10 @@ class SampleAndAggregate(GeneralizedModel):
 
         self.build()
 
-    def generate_negative_samples_from_labels(self, labels, num_samples, graph, alpha=0.75):
-        """
-        Produce exactly `num_samples` negative samples as a 1D tensor [num_samples],
-        excluding any node that:
-          - is itself a label in `labels`,
-          - or is a neighbor of any label in `labels`.
 
-        It samples nodes from a "centrality^alpha" distribution,
-        using random.choices(...) in Python.
-
-        Args:
-            labels:      tf.Tensor of shape [batch_size, 1] or [batch_size].
-            num_samples: Scalar int, how many negative samples to draw.
-            graph:       NetworkX graph (assumed to have integer node IDs).
-            alpha:       Exponent for distortion (like in unigram sampling).
-
-        Returns:
-            neg_samples_tf: A tf.Tensor of shape [num_samples], dtype=int64.
-        """
-
-        # 1) Load your centrality measures (like "degrees") from JSON.
-        centrality_data = load_centrality_measures("centrality_measures_final_complete.json")
-        centrality_degree = centrality_data["degree"]  # dict: str(node_id) -> float
-
-        # Use only the actual nodes in the graph
-        nodes = list(graph.nodes())
-
-        # Build centrality probabilities only for nodes in the graph
-        centrality_list = [centrality_degree.get(str(node), 0.0) for node in nodes]
-        centrality_list = np.array(centrality_list, dtype=np.float32)
-
-        # Apply exponent distortion
-        centrality_list = centrality_list ** alpha
-        total_scores = np.sum(centrality_list)
-        base_probabilities = centrality_list / total_scores  # shape: [len(nodes)]
-
-        def py_negative_sampler(labels_np):
-            """
-            Python function called by tf.py_func at runtime.
-            Excludes label nodes and their neighbors from sampling.
-            Returns a NumPy array of shape [num_samples].
-            """
-            labels_np = labels_np.reshape(-1).astype(np.int64)
-            label_set = set(labels_np)
-
-            # Collect neighbors for each label node
-            neighbor_set = set()
-            for lbl in label_set:
-                # Only do this if lbl is indeed a node in the graph
-                if graph.has_node(lbl):
-                    for nbr in graph.neighbors(lbl):
-                        neighbor_set.add(nbr)
-
-            # The union of label nodes + their neighbors
-            exclude_set = label_set.union(neighbor_set)
-
-            # Build a local distribution that excludes these nodes
-            local_nodes = []
-            local_probs = []
-            for node_id, prob in zip(nodes, base_probabilities):
-                if node_id not in exclude_set:
-                    local_nodes.append(node_id)
-                    local_probs.append(prob)
-
-            local_probs = np.array(local_probs, dtype=np.float32)
-
-            # If everything got excluded (edge case), revert to full distribution
-            if np.sum(local_probs) <= 0.0:
-                local_nodes = nodes
-                local_probs = base_probabilities.copy()
-
-            # Renormalize local_probs
-            local_probs /= np.sum(local_probs)
-
-            # Sample exactly `num_samples` node IDs
-            sampled_neg = random.choices(local_nodes, weights=local_probs, k=num_samples)
-
-            return np.array(sampled_neg, dtype=np.int64)
-
-        # 2) Wrap the sampler in tf.py_func so we can call it inside the TF graph
-        neg_samples_tf = tf.py_func(
-            func=py_negative_sampler,
-            inp=[labels],
-            Tout=tf.int64
-        )
-
-        # 3) Set shape to [num_samples]
-        neg_samples_tf.set_shape([num_samples])
-
-        return neg_samples_tf
 
     def sample(self, inputs, layer_infos, batch_size=None):
         """ Sample neighbors to be the supportive fields for multi-layer convolutions.
-
         Args:
             inputs: batch inputs
             batch_size: the number of inputs (different for batch inputs and negative samples).
@@ -372,6 +196,7 @@ class SampleAndAggregate(GeneralizedModel):
             samples.append(tf.reshape(node, [support_size * batch_size,]))
             support_sizes.append(support_size)
         return samples, support_sizes
+
 
     def aggregate(self, samples, input_features, dims, num_samples, support_sizes, batch_size=None,
                   aggregators=None, name=None, concat=False, model_size="small"):
@@ -401,10 +226,8 @@ class SampleAndAggregate(GeneralizedModel):
 
         for layer in range(len(num_samples)):
             if new_agg:
-                # Check if using CSCAggregator to adjust dim_mult
-                dim_mult = 1  # Disable concat-based dimension doubling
 
-
+                dim_mult = 1
                 if layer == len(num_samples) - 1:
                     aggregator = self.aggregator_cls(dim_mult * dims[layer], dims[layer + 1],
                                                      act=lambda x: x, dropout=self.placeholders['dropout'],
@@ -435,19 +258,7 @@ class SampleAndAggregate(GeneralizedModel):
                 tf.cast(self.placeholders['batch2'], dtype=tf.int64),
                 [self.batch_size, 1])
 
-        '''
-        self.neg_samples, _, _ = (tf.nn.fixed_unigram_candidate_sampler(
-            true_classes=labels,
-            num_true=1,
-            num_sampled= self.neg_sample_size,
-            unique=False,
-            range_max=len(self.degrees),
-            distortion=0.75,
-            unigrams=self.degrees.tolist()))
-            
-        '''
-
-        self.neg_samples = self.generate_negative_samples_from_labels(labels, self.neg_sample_size, self.G)
+        self.neg_samples = generate_negative_samples_from_labels(labels, self.neg_sample_size, self.G)
 
         samples1, support_sizes1 = self.sample(self.inputs1, self.layer_infos)
         samples2, support_sizes2 = self.sample(self.inputs2, self.layer_infos)
@@ -466,8 +277,7 @@ class SampleAndAggregate(GeneralizedModel):
 
         dim_mult = 2 if self.concat else 1
         self.link_pred_layer = BipartiteEdgePredLayer(dim_mult*self.dims[-1],
-                dim_mult*self.dims[-1], self.placeholders, act=tf.nn.sigmoid, 
-                bilinear_weights=False,
+                dim_mult*self.dims[-1], self.placeholders, act=tf.nn.sigmoid,
                 name='edge_predict')
 
         self.outputs1 = tf.nn.l2_normalize(self.outputs1, 1)
@@ -479,7 +289,6 @@ class SampleAndAggregate(GeneralizedModel):
 
         # TF graph management
         self._loss()
-        self._accuracy()
         self.loss = self.loss / tf.cast(self.batch_size, tf.float32)
         grads_and_vars = self.optimizer.compute_gradients(self.loss)
         clipped_grads_and_vars = [(tf.clip_by_value(grad, -5.0, 5.0) if grad is not None else None, var) 
@@ -498,16 +307,3 @@ class SampleAndAggregate(GeneralizedModel):
                                                      self.neg_outputs)
         tf.summary.scalar('loss', self.loss)
 
-    def _accuracy(self):
-        # shape: [batch_size]
-        aff = self.link_pred_layer.affinity(self.outputs1, self.outputs2)
-        # shape : [batch_size x num_neg_samples]
-        self.neg_aff = self.link_pred_layer.neg_cost(self.outputs1, self.neg_outputs)
-        self.neg_aff = tf.reshape(self.neg_aff, [self.batch_size, self.neg_sample_size])
-        _aff = tf.expand_dims(aff, axis=1)
-        self.aff_all = tf.concat(axis=1, values=[self.neg_aff, _aff])
-        size = tf.shape(self.aff_all)[1]
-        _, indices_of_ranks = tf.nn.top_k(self.aff_all, k=size)
-        _, self.ranks = tf.nn.top_k(-indices_of_ranks, k=size)
-        self.mrr = tf.reduce_mean(tf.div(1.0, tf.cast(self.ranks[:, -1] + 1, tf.float32)))
-        tf.summary.scalar('mrr', self.mrr)
