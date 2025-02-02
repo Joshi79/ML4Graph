@@ -124,6 +124,20 @@ def save_centrality_as_json(centrality_measures, output_file):
         json.dump(centrality_measures, f, indent=4)
     print(f"Centrality measures saved to {output_file}")
 
+def calculate_bridge_strength_ppi(graph, go_labels):
+    go_sets = {protein: {i for i, val in enumerate(labels) if val == 1}
+               for protein, labels in go_labels.items()}
+
+    bridge_strength = {}
+    for protein in graph:
+        protein_go = go_sets[protein]
+        strength = 0
+        for neighbor in graph[protein]:
+            neighbor_go = go_sets[neighbor]
+            if protein_go.isdisjoint(neighbor_go):
+                strength += 1
+        bridge_strength[protein] = strength
+    return bridge_strength
 
 def glorot(shape, name=None):
     init_range = np.sqrt(6.0/(shape[0] + shape[1]))
@@ -193,19 +207,20 @@ if __name__ == "__main__":
     '''
 
     '''
-    Calculate once the bridge strength once
-    bridge_strength_file = os.path.join(directory, "ppi-bridge_strength_normalized.json")
-
-    with open(..//PPI_Data/bridge_strength_file, "r") as f:
-        normalize_centralized_degree = json.load(f)
+    # Calculate the Bridge Strength in the PPI Dataset
+    bridge_strength_ppi = calculate_bridge_strength_ppi(G, class_map)
+    normalized_bridge_strength = normalize_centrality(bridge_strength_ppi)
+    save_centrality_as_json(normalized_bridge_strength, "../PPI_Data/ppi-bridge_strength_normalized.json")
     '''
 
-    directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
-    normalize_centralized_degree = load_centrality_measures(directory, "normalized_degree_centrality.json")
-    normalize_centralized_degree = normalize_centralized_degree["degree"]
+    #Load the centralties on which basis the random walks are done
+    #directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
+    #normalize_centralized_degree = load_centrality_measures(directory, "ppi-bridge_strength_normalized.json")
+    #normalize_centralized_degree = normalize_centralized_degree["degree"]
+
 
 
     # Run random walks and save the output
-    pairs = run_random_walks_with_centrality(G, G.nodes(), normalize_centralized_degree)
-    with open("../PPI_Data/ppi-walks.txt", "w") as fp:
-            fp.write("\n".join([f"{p[0]}\t{p[1]}" for p in pairs]))
+    #pairs = run_random_walks_with_centrality(G, G.nodes(), normalize_centralized_degree)
+    #with open("../PPI_Data/ppi-bridge_walks.txt", "w") as fp:
+    #        fp.write("\n".join([f"{p[0]}\t{p[1]}" for p in pairs]))
