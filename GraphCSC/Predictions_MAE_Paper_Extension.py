@@ -20,8 +20,7 @@ with open("test_nodes_bridge.txt", "r") as f:
     test_nodes = [line.strip() for line in f]
 
 directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
-centrality_measure = load_centrality_measures(directory, "ppi-bridge_strength_normalized.json")
-centrality = centrality_measure["degree"]
+centrality = load_centrality_measures(directory, "ppi-bridge_strength_normalized.json")
 
 # Calculate the mean centrality (for reference)
 mean_centrality = np.mean(list(centrality.values()))
