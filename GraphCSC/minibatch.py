@@ -25,7 +25,7 @@ class EdgeMinibatchIterator(object):
     fixed_n2v -- signals that the iterator is being used to retrain n2v with only existing nodes as context
     """
     def __init__(self, G, id2idx, 
-            placeholders, centrality_dict, context_pairs=None, batch_size=1024, max_degree=25,
+            placeholders, centrality_dict, context_pairs=None, batch_size=1024, max_degree=25,centrality=True,
             n2v_retrain=False, fixed_n2v=False,
             **kwargs):
 
@@ -37,6 +37,7 @@ class EdgeMinibatchIterator(object):
         self.max_degree = max_degree
         self.batch_num = 0
         self.centrality_dict = centrality_dict
+        self.centrality = centrality
 
         self.nodes = np.random.permutation(G.nodes())
         self.adj, self.deg = self.construct_adj()
@@ -68,7 +69,12 @@ class EdgeMinibatchIterator(object):
         if self.centrality_dict is None:
             # If we have no centrality data, just return the pair unchanged
             return node1, node2
-        self.degree_centrality_dict = self.centrality_dict["degree"]
+
+        if  self.centrality:
+            self.degree_centrality_dict = self.centrality_dict["degree"]
+        else:
+            self.degree_centrality_dict = self.centrality_dict
+
 
         c1 = self.degree_centrality_dict.get(node1, 0.0)
         c2 = self.degree_centrality_dict.get(node2, 0.0)
