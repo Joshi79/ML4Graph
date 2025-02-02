@@ -27,7 +27,7 @@ log_device_placement = False
 save_embeddings = True
 train_prefix = "ppi"
 random_context = True
-epochs = 2
+epochs = 30
 
 
 def construct_placeholders():
@@ -95,8 +95,6 @@ def train(train_data, centrality_measures, context=True):
     if context:
         context_pairs_walk = train_data[3]
         print(f"Number of random walk pairs: {len(context_pairs_walk)}")
-        print(f"Sample pairs: {context_pairs_walk[:10]}")
-
 
     placeholders = construct_placeholders()
     minibatch = EdgeMinibatchIterator(
