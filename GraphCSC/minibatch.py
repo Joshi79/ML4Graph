@@ -1,3 +1,4 @@
+import numpy as np
 
 # Disclaimer
 # Most of the code is not my code. Most of the code is taken from the original GraphSage paper
@@ -5,10 +6,6 @@
 # ditionary to this function
 # https://github.com/williamleif/GraphSAGE
 
-
-import numpy as np
-
-np.random.seed(123)
 
 class EdgeMinibatchIterator(object):
     
