@@ -14,7 +14,7 @@ from aggregators import CSCAggregator
 
 class Model(object):
     def __init__(self, **kwargs):
-        allowed_kwargs = {'name', 'logging', 'model_size'}
+        allowed_kwargs = {'name', 'logging', 'model_size', 'centrality'}
         for kwarg in kwargs.keys():
             assert kwarg in allowed_kwargs, 'Invalid keyword argument: ' + kwarg
         name = kwargs.get('name')
@@ -158,6 +158,7 @@ class SampleAndAggregate(GeneralizedModel):
             self.features = tf.Variable(tf.constant(features, dtype=tf.float32), trainable=False)
             if not self.embeds is None:
                 self.features = tf.concat([self.embeds, self.features], axis=1)
+
         self.degrees = degrees
         self.concat = concat
 
