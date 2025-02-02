@@ -6,21 +6,21 @@ import numpy as np
 from utils import load_centrality_measures
 
 # Load the train and test embeddings
-train_embeddings = np.load("train_embeddings.npy")
-test_embeddings = np.load("test_embeddings.npy")
+train_embeddings = np.load("train_embeddings_bridge.npy")
+test_embeddings = np.load("test_embeddings_bridge.npy")
 
 print(f"Train Embeddings Shape: {train_embeddings.shape}")
 print(f"Test Embeddings Shape: {test_embeddings.shape}")
 
 # Load the node lists for train and test
-with open("train_nodes.txt", "r") as f:
+with open("train_nodes_bridge.txt", "r") as f:
     train_nodes = [line.strip() for line in f]
 
-with open("test_nodes.txt", "r") as f:
+with open("test_nodes_bridge.txt", "r") as f:
     test_nodes = [line.strip() for line in f]
 
 directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
-centrality_measure = load_centrality_measures(directory, "normalized_degree_centrality.json")
+centrality_measure = load_centrality_measures(directory, "ppi-bridge_strength_normalized.json")
 centrality = centrality_measure["degree"]
 
 # Calculate the mean centrality (for reference)
