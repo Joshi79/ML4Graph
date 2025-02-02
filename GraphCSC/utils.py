@@ -10,7 +10,7 @@ WALK_LEN = 5
 N_WALKS = 50
 
 
-def load_data(prefix,directory, normalize=True, load_walks=False):
+def load_data(prefix,directory, normalize=True, load_walks=False, degree=True):
     """Load graph, features, and class map from files."""
 
     G_data = json.load(open(os.path.join(directory, prefix + "-G.json")))
@@ -71,13 +71,23 @@ def load_data(prefix,directory, normalize=True, load_walks=False):
         scaler.fit(train_feats)
         feats = scaler.transform(feats)
 
-    # Load Centrality Based random walks
-    walks = []
-    if load_walks:
-        with open(os.path.join(directory, prefix + "-walks.txt")) as fp:
-            for line in fp:
-                walks.append(list(map(conversion, line.split())))
-    return G, feats, id_map, walks, class_map
+
+    if degree:
+        # Load Centrality Based random walks
+        walks = []
+        if load_walks:
+            with open(os.path.join(directory, prefix + "-walks.txt")) as fp:
+                for line in fp:
+                    walks.append(list(map(conversion, line.split())))
+        return G, feats, id_map, walks, class_map
+    else:
+        walks = []
+        if load_walks:
+            with open(os.path.join(directory, prefix + "-bridge_walks.txt")) as fp:
+                for line in fp:
+                    walks.append(list(map(conversion, line.split())))
+        return G, feats, id_map, walks, class_map
+
 
 # Function to load the pre-computed centrality measures
 def load_centrality_measures(directory, file_name):
