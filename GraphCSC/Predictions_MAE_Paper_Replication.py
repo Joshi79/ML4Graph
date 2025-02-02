@@ -6,8 +6,8 @@ import numpy as np
 from utils import load_centrality_measures
 
 # Load the train and test embeddings
-train_embeddings = np.load("Fin_train_embeddings.npy")
-test_embeddings = np.load("Fintest_embeddings.npy")
+train_embeddings = np.load("train_embeddings.npy")
+test_embeddings = np.load("test_embeddings.npy")
 
 print(f"Train Embeddings Shape: {train_embeddings.shape}")
 print(f"Test Embeddings Shape: {test_embeddings.shape}")
@@ -26,6 +26,9 @@ centrality = centrality_measure["degree"]
 # Calculate the mean centrality (for reference)
 mean_centrality = np.mean(list(centrality.values()))
 print("Mean Centrality:", mean_centrality)
+# std
+std_centrality = np.std(list(centrality.values()))
+print(std_centrality)
 
 # Align centrality values with the embeddings
 train_centrality = np.array([centrality.get(node, 0) for node in train_nodes]).reshape(-1, 1)
@@ -55,7 +58,7 @@ early_stopping = EarlyStopping(
 # Train the model with early stopping
 model.fit(
     train_embeddings, train_centrality,
-    epochs=500,
+    epochs=100   ,
     batch_size=32,
     validation_split=0.1,
     callbacks=[early_stopping]
@@ -64,3 +67,17 @@ model.fit(
 # Evaluate the model on the test set
 loss, mae = model.evaluate(test_embeddings, test_centrality)
 print("Test MAE:", mae)
+
+# Compute additional metrics: NMAE and CV(MAE)
+y_max = np.max(test_centrality)
+y_min = np.min(test_centrality)
+y_mean = np.mean(test_centrality)
+
+nmae = mae / (y_max - y_min)  # Normalized Mean Absolute Error
+cv_mae = mae / y_mean  # Coefficient of Variation of MAE
+
+# Print results
+print("\nEvaluation Metrics:")
+print(f"Test MAE: {mae}")
+print(f"Test NMAE: {nmae}")
+print(f"Test CV(MAE): {cv_mae}")
