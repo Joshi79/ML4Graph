@@ -57,7 +57,7 @@ early_stopping = EarlyStopping(
 # Train the model with early stopping
 model.fit(
     train_embeddings, train_centrality,
-    epochs=100   ,
+    epochs=500,
     batch_size=32,
     validation_split=0.1,
     callbacks=[early_stopping]
