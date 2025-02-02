@@ -185,18 +185,17 @@ if __name__ == "__main__":
     '''
     Calculate once the bridge strength once
     bridge_strength_file = os.path.join(directory, "ppi-bridge_strength_normalized.json")
-    
+
+    with open(..//PPI_Data/bridge_strength_file, "r") as f:
+        normalize_centralized_degree = json.load(f)
     '''
 
-    #with open(bridge_strength_file, "r") as f:
-       # normalize_centralized_degree = json.load(f)
-
     directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
-    cent = load_centrality_measures(directory, "normalized_degree_centrality.json")
-    normalize_centralized_degree = cent["degree"]
+    normalize_centralized_degree = load_centrality_measures(directory, "normalized_degree_centrality.json")
+    normalize_centralized_degree = normalize_centralized_degree["degree"]
+
 
     # Run random walks and save the output
-
     pairs = run_random_walks_with_centrality(G, G.nodes(), normalize_centralized_degree)
     with open("../PPI_Data/ppi-walks.txt", "w") as fp:
             fp.write("\n".join([f"{p[0]}\t{p[1]}" for p in pairs]))
