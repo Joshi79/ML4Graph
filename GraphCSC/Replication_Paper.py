@@ -200,9 +200,9 @@ def main():
     print("Loading data...")
     directory = r"C:\Users\User\PycharmProjects\ML4Graph\PPI_Data"
     centrality_dict = load_centrality_measures(directory, "normalized_degree_centrality.json")
-    train_data = load_data(train_prefix, directory,  load_walks=True)
+    train_data = load_data(train_prefix, directory,  load_walks=True,degree=True)
     print("Data loaded.")
-    train(train_data, centrality_dict)
+    train(train_data, centrality_dict, context=True, centrality=True)
 
 
 if __name__ == "__main__":
