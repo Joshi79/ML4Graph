@@ -114,6 +114,6 @@ class BipartiteEdgePredLayer(Layer):
         Lg_loss = self._xent_loss(inputs1, inputs2, neg_samples)
         Lc_loss = self.ranking_loss(inputs1, inputs2)
 
-        lambda_c = 0.5
+        lambda_c = 0.1
         total_loss = Lg_loss + lambda_c * Lc_loss
         return total_loss
