@@ -39,7 +39,7 @@ class Layer(object):
     """
 
     def __init__(self, **kwargs):
-        allowed_kwargs = {'name', 'logging', 'model_size', 'concat'}
+        allowed_kwargs = {'name', 'logging', 'model_size', 'concat', 'centrality'}
         for kwarg in kwargs.keys():
             assert kwarg in allowed_kwargs, 'Invalid keyword argument: ' + kwarg
         name = kwargs.get('name')
