@@ -4,6 +4,7 @@ from negative_sampler import generate_negative_samples_from_labels
 from prediction import BipartiteEdgePredLayer
 from aggregators import CSCAggregator
 
+
 # Disclaimer
 # The Model object
 # DISCLAIMER:
@@ -83,7 +84,6 @@ class GeneralizedModel(Model):
 
     def __init__(self, **kwargs):
         super(GeneralizedModel, self).__init__(**kwargs)
-        
 
     def build(self):
         """ Wrapper for _build() """
@@ -100,14 +100,16 @@ class GeneralizedModel(Model):
 
         self.opt_op = self.optimizer.minimize(self.loss)
 
-# SAGEInfo is a namedtuple that specifies the parameters 
+
+# SAGEInfo is a namedtuple that specifies the parameters
 # of the recursive GraphSAGE layers
 SAGEInfo = namedtuple("SAGEInfo",
-    ['layer_name', # name of the layer (to get feature embedding etc.)
-     'neigh_sampler', # callable neigh_sampler constructor
-     'num_samples',
-     'output_dim' # the output (i.e., hidden) dimension
-    ])
+                      ['layer_name',  # name of the layer (to get feature embedding etc.)
+                       'neigh_sampler',  # callable neigh_sampler constructor
+                       'num_samples',
+                       'output_dim'  # the output (i.e., hidden) dimension
+                       ])
+
 
 class SampleAndAggregate(GeneralizedModel):
     """
@@ -115,17 +117,17 @@ class SampleAndAggregate(GeneralizedModel):
     """
 
     def __init__(self, placeholders, features, adj, degrees,
-            layer_infos, G, concat=False, aggregator_type="mean",
-            model_size="small", identity_dim=0, learning_rate=0.7, neg_sample_size=5, weight_decay=0.0,
-            **kwargs):
+                 layer_infos, G, concat=False, aggregator_type="mean",
+                 model_size="small", identity_dim=0, learning_rate=0.7, neg_sample_size=5, weight_decay=0.0,
+                 **kwargs):
         '''
         Args:
             - placeholders: Stanford TensorFlow placeholder object.
-            - features: Numpy array with node features. 
+            - features: Numpy array with node features.
                         NOTE: Pass a None object to train in featureless mode (identity features for nodes)!
             - adj: Numpy array with adjacency lists (padded with random re-samples)
-            - degrees: Numpy array with node degrees. 
-            - layer_infos: List of SAGEInfo namedtuples that describe the parameters of all 
+            - degrees: Numpy array with node degrees.
+            - layer_infos: List of SAGEInfo namedtuples that describe the parameters of all
                    the recursive layers. See SAGEInfo definition above.
             - concat: whether to concatenate during recursive iterations
             - aggregator_type: how to aggregate neighbor information
@@ -145,10 +147,10 @@ class SampleAndAggregate(GeneralizedModel):
         self.G = G
 
         if identity_dim > 0:
-           self.embeds = tf.get_variable("node_embeddings", [adj.get_shape().as_list()[0], identity_dim])
+            self.embeds = tf.get_variable("node_embeddings", [adj.get_shape().as_list()[0], identity_dim])
         else:
-           self.embeds = None
-        if features is None: 
+            self.embeds = None
+        if features is None:
             if identity_dim == 0:
                 raise Exception("Must have a positive value for identity feature dimension if no input features given.")
             self.features = self.embeds
@@ -175,7 +177,7 @@ class SampleAndAggregate(GeneralizedModel):
             inputs: batch inputs
             batch_size: the number of inputs (different for batch inputs and negative samples).
         """
-        
+
         if batch_size is None:
             batch_size = self.batch_size
         samples = [inputs]
@@ -187,10 +189,9 @@ class SampleAndAggregate(GeneralizedModel):
             support_size *= layer_infos[t].num_samples
             sampler = layer_infos[t].neigh_sampler
             node = sampler((samples[k], layer_infos[t].num_samples))
-            samples.append(tf.reshape(node, [support_size * batch_size,]))
+            samples.append(tf.reshape(node, [support_size * batch_size, ]))
             support_sizes.append(support_size)
         return samples, support_sizes
-
 
     def aggregate(self, samples, input_features, dims, num_samples, support_sizes, batch_size=None,
                   aggregators=None, name=None, concat=False, model_size="small"):
@@ -249,8 +250,8 @@ class SampleAndAggregate(GeneralizedModel):
 
     def _build(self):
         labels = tf.reshape(
-                tf.cast(self.placeholders['batch2'], dtype=tf.int64),
-                [self.batch_size, 1])
+            tf.cast(self.placeholders['batch2'], dtype=tf.int64),
+            [self.batch_size, 1])
 
         self.neg_samples = generate_negative_samples_from_labels(labels, self.neg_sample_size, self.G)
 
@@ -258,21 +259,22 @@ class SampleAndAggregate(GeneralizedModel):
         samples2, support_sizes2 = self.sample(self.inputs2, self.layer_infos)
         num_samples = [layer_info.num_samples for layer_info in self.layer_infos]
         self.outputs1, self.aggregators = self.aggregate(samples1, [self.features], self.dims, num_samples,
-                support_sizes1, concat=self.concat, model_size=self.model_size)
+                                                         support_sizes1, concat=self.concat, model_size=self.model_size)
         self.outputs2, _ = self.aggregate(samples2, [self.features], self.dims, num_samples,
-                support_sizes2, aggregators=self.aggregators, concat=self.concat,
-                model_size=self.model_size)
+                                          support_sizes2, aggregators=self.aggregators, concat=self.concat,
+                                          model_size=self.model_size)
 
         neg_samples, neg_support_sizes = self.sample(self.neg_samples, self.layer_infos,
-            self.neg_sample_size)
+                                                     self.neg_sample_size)
         self.neg_outputs, _ = self.aggregate(neg_samples, [self.features], self.dims, num_samples,
-                neg_support_sizes, batch_size=self.neg_sample_size, aggregators=self.aggregators,
-                concat=self.concat, model_size=self.model_size)
+                                             neg_support_sizes, batch_size=self.neg_sample_size,
+                                             aggregators=self.aggregators,
+                                             concat=self.concat, model_size=self.model_size)
 
         dim_mult = 2 if self.concat else 1
-        self.link_pred_layer = BipartiteEdgePredLayer(dim_mult*self.dims[-1],
-                dim_mult*self.dims[-1], self.placeholders, act=tf.nn.sigmoid,
-                name='edge_predict')
+        self.link_pred_layer = BipartiteEdgePredLayer(dim_mult * self.dims[-1],
+                                                      dim_mult * self.dims[-1], self.placeholders, act=tf.nn.sigmoid,
+                                                      name='edge_predict')
 
         self.outputs1 = tf.nn.l2_normalize(self.outputs1, 1)
         self.outputs2 = tf.nn.l2_normalize(self.outputs2, 1)
@@ -285,8 +287,8 @@ class SampleAndAggregate(GeneralizedModel):
         self._loss()
         self.loss = self.loss / tf.cast(self.batch_size, tf.float32)
         grads_and_vars = self.optimizer.compute_gradients(self.loss)
-        clipped_grads_and_vars = [(tf.clip_by_value(grad, -5.0, 5.0) if grad is not None else None, var) 
-                for grad, var in grads_and_vars]
+        clipped_grads_and_vars = [(tf.clip_by_value(grad, -5.0, 5.0) if grad is not None else None, var)
+                                  for grad, var in grads_and_vars]
         self.grad, _ = clipped_grads_and_vars[0]
         self.opt_op = self.optimizer.apply_gradients(clipped_grads_and_vars)
 
@@ -300,4 +302,3 @@ class SampleAndAggregate(GeneralizedModel):
                                                      self.outputs2,
                                                      self.neg_outputs)
         tf.summary.scalar('loss', self.loss)
-
