@@ -1,19 +1,41 @@
 # Machine Learning for Graphs
+
 ## Exploiting Centrality Information with Graph Convolutions for Network Representation Learning
 
-This repository is there for the reason to replicate part of the given Research paper. 
-The code is based on the GraphSage algorithm which was created by Williams.
-https://github.com/williamleif/GraphSAGE/blob/master/example_unsupervised.sh
+This repository replicates part of a research paper. The code is based on the GraphSAGE algorithm developed by William Leif:  
+[GraphSAGE GitHub](https://github.com/williamleif/GraphSAGE/blob/master/example_unsupervised.sh)
 
-The basis of the GraphSage code was extendend to be able to implement a simple GraphCSC model for Degree centrality and Bridge strength. 
+**GraphSAGE Extension**  
+The core GraphSAGE codebase has been extended to implement a simple GraphCSC model for Degree Centrality and Bridge Strength.
 
-It is important to Know to run the code in this repository, it is required to use ## Python 3.6.0. \
-To be able to run the code, one needs to change also the direcotry path in the python files. 
-Therefore after cloning the github one needs to change the direcoty in the files: 
-Change the directory in line 15 and 19 in the file negativer_sampler.py
-Furthermore in the Extension_Paper.py, Replication_paper.py, utils.py, Prediictions_MAE_Paper_Extension.py, and lastly Predictions_MAE_Paper_replications. \\
+---
 
-The embeddings and test and train nodes are also uploaded in the Github, therefore, one can replicate the results just by running  Prediictions_MAE_Paper_Extension.py, and lastly Predictions_MAE_Paper_replications without the need to rerun the entire model to create the embeddings. \\
+## Requirements
 
-The Preprocessed data can be found in the data folder. \
-The preprocessed PPI data and the centrality random walks can be found in the PPI_Data foler. 
+- **Python 3.6.0** is required to run this code.
+- After cloning the repository, update the directory paths in the following files:
+  - `negativer_sampler.py` (lines 15 and 19)
+  - `Extension_Paper.py`
+  - `Replication_paper.py`
+  - `utils.py`
+  - `Prediictions_MAE_Paper_Extension.py`
+  - `Predictions_MAE_Paper_replications.py`
+
+---
+
+## Usage
+
+### Replicating Results
+
+- The embeddings, test nodes, and train nodes are included in the repository.
+- To replicate the results, simply run:
+  - `Prediictions_MAE_Paper_Extension.py`
+  - `Predictions_MAE_Paper_replications.py`
+- These scripts do not require rerunning the entire model to recreate embeddings.
+
+---
+
+## Data
+
+- Preprocessed data is located in the `data` folder.
+- Preprocessed PPI data and centrality random walks are located in the `PPI_Data` folder.
