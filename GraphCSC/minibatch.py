@@ -62,11 +62,8 @@ class EdgeMinibatchIterator(object):
         Return (node_hi, node_lo) such that centrality[node_hi] >= centrality[node_lo].
         If no centrality is found, default to no reordering.
         """
-        # If no centrality is found just return the nodes
         if self.centrality_dict is None:
-            # If we have no centrality data, just return the pair unchanged
             return node1, node2
-
         if  self.centrality:
             self.degree_centrality_dict = self.centrality_dict["degree"]
         else:
