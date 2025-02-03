@@ -20,16 +20,13 @@ class NeighborSampler(Layer):
     def _call(self, inputs):
         ids, num_samples = inputs
 
-        # Look up the adjacency list for the given IDs
         adj_lists = tf.nn.embedding_lookup(self.adj_info, ids)
         max_node_id = tf.shape(self.centrality_tensor)[0] - 1
         adj_lists = tf.clip_by_value(adj_lists, 0, max_node_id)
 
 
-        # Gather centrality scores for neighbors
         centrality_scores = tf.gather(self.centrality_tensor, adj_lists)
 
-        # Sort neighbors based on centrality scores
         _, sorted_indices = tf.nn.top_k(centrality_scores, k=tf.shape(centrality_scores)[1], sorted=True)
 
         batch_size = tf.shape(adj_lists)[0]
@@ -38,7 +35,6 @@ class NeighborSampler(Layer):
         gather_indices = tf.stack([batch_indices, sorted_indices], axis=-1)
         sorted_adj_lists = tf.gather_nd(adj_lists, gather_indices)
 
-        # Slice to get the top-k neighbors
         top_neighbors = tf.slice(sorted_adj_lists, [0, 0], [-1, num_samples])
 
         return top_neighbors
