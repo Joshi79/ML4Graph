@@ -7,7 +7,7 @@ https://github.com/williamleif/GraphSAGE/blob/master/example_unsupervised.sh
 
 The basis of the GraphSage code was extendend to be able to implement a simple GraphCSC model for Degree centrality and Bridge strength. 
 
-It is important to Know to run the code in this repository, it is required to use Python 3.6.0. \
+It is important to Know to run the code in this repository, it is required to use ## Python 3.6.0. \
 To be able to run the code, one needs to change also the direcotry path in the python files. 
 Therefore after cloning the github one needs to change the direcoty in the files: 
 Change the directory in line 15 and 19 in the file negativer_sampler.py
