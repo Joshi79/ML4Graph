@@ -163,9 +163,9 @@ def train(train_data, centrality_measures, context=True, centrality=True):
             iter += 1
 
     # Save all embeddings
-    sess.run(train_adj_info.op)  # Ensure training adjacency is active
+    sess.run(train_adj_info.op)
     all_embeddings, all_nodes = save_embeddings(sess, model, minibatch)
-    all_nodes = [node[0] for node in all_nodes]  # All nodes as a flat list
+    all_nodes = [node[0] for node in all_nodes]
 
     print(f"Total Nodes Processed in Embeddings: {len(all_nodes)}")
 
@@ -173,16 +173,13 @@ def train(train_data, centrality_measures, context=True, centrality=True):
     test_nodes = [n for n, data in G.nodes(data=True) if data.get('val', False) or data.get('test', False)]
 
 
-    # Create a mapping from node ID to its index
     node_to_index = {node: idx for idx, node in enumerate(all_nodes)}
     train_indices = [node_to_index[n] for n in train_nodes]
     test_indices = [node_to_index[n] for n in test_nodes]
 
-    # Extract train and test embeddings using the indices
     train_embeddings = all_embeddings[train_indices]
     test_embeddings = all_embeddings[test_indices]
 
-    # Save embeddings and corresponding nodes separately
     np.save("train_embeddings_bridge.npy", train_embeddings)
     np.save("test_embeddings_bridge.npy", test_embeddings)
 
