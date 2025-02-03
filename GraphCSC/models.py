@@ -237,7 +237,6 @@ class SampleAndAggregate(GeneralizedModel):
                 aggregator = aggregators[layer]
             # hidden representation at current layer for all support nodes that are various hops away
             next_hidden = []
-            # as layer increases, the number of support nodes needed decreases
             for hop in range(len(num_samples) - layer):
                 dim_mult = 2 if concat and (layer != 0) else 1
                 neigh_dims = [batch_size * support_sizes[hop],
